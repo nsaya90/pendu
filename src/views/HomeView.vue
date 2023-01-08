@@ -12,7 +12,7 @@
             <div class="box-info-succes" v-if="message">{{ message }}</div>
             <p v-if="word">{{ word }}</p>
         </div>
-        <p v-if="findWord">{{ findWord }}</p>
+        <p v-if="wordChoose">{{ wordChoose }}</p>
         <div class="box-second">
             <!-- 9 erreurs maximum -->
             <div class="box-use-letter">
@@ -41,7 +41,7 @@
                 </div>
             </div>
         </div>
-        <p>{{ checkLetter }}</p>
+
         <p>{{ check }}</p>
     </div>
 </template>
@@ -91,26 +91,11 @@ export default {
             message: "",
             word: "",
             lengthWord: "",
-            findWord: "",
+            wordChoose: "",
             check: "",
         };
     },
-    computed: {
-        checkLetter() {
-            for (let index = 0; index < this.word.length; index++) {
-                // console.log(this.word[index]);
-                for (let i = 0; i < this.useLetter.length; i++) {
-                    console.log(this.useLetter[i]);
-                    if (this.word[index] === this.useLetter[i]) {
-                        // find index et remplacer le _ par la lettre trouvé
-                        console.log("oui");
-                    } else {
-                        console.log("non");
-                    }
-                }
-            }
-        },
-    },
+    computed: {},
     methods: {
         choose(e) {
             // console.log(e.target.value);
@@ -132,7 +117,18 @@ export default {
                 this.isActive = false;
             }
 
-            // console.log(this.word);
+            // Vérification si lettre existe dans le mot random
+            if (this.word.includes(e.target.value)) {
+                // find index et remplacer le _ par la lettre trouvé
+
+                this.word.split("").forEach((letter, index) => {
+                    if (letter === e.target.value) {
+                        this.wordChoose[index] = e.target.value;
+                    }
+                });
+            } else {
+                console.log("non");
+            }
         },
         newgame() {
             let rand = Math.floor(Math.random() * mots.length);
@@ -141,8 +137,16 @@ export default {
 
             let nbLetter = rValue.length;
 
-            const le_mot = rValue.toUpperCase().replace(/[A-Z0-9]/g, " _");
-            this.findWord = le_mot;
+            const hidden_word = this.word
+                .toUpperCase()
+                .slice()
+                .replace(/[A-Z0-9]/g, "_");
+
+            const findWord = hidden_word.split("");
+
+            this.wordChoose = findWord;
+
+            console.log(this.wordChoose);
 
             this.useLetter = [];
         },
