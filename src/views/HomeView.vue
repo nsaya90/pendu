@@ -1,6 +1,6 @@
 <template>
     <div class="wrapper">
-        <h1>Bienvenue sur le jeu du Pendu</h1>
+        <h1>Jeu du Pendu</h1>
         <div class="buttons">
             <button class="btn" @click="newgame">
                 <span></span>
@@ -8,11 +8,37 @@
             </button>
         </div>
         <div class="box-info">
-            <div class="box-pendu"><h1>box pendu</h1></div>
-            <div class="box-info-succes" v-if="message">{{ message }}</div>
-            <p v-if="word">{{ word }}</p>
+            <div class="box-pendu">
+                <img
+                    v-if="error"
+                    :src="require(`../assets/${error}.png`)"
+                    alt="image pendu"
+                    width="200"
+                    height="200"
+                    class="rotate-scale-up"
+                />
+            </div>
+
+            <div class="box-info-succes" v-if="looseCondition === true">
+                <p style="color: white">
+                    Le mot a trouver été :
+                    <span class="word">{{ word }}</span>
+                </p>
+            </div>
+            <div class="box-info-succes" v-if="winCondition === true">
+                <p style="color: white">Bravo vous avez gagné !</p>
+            </div>
         </div>
-        <p v-if="wordChoose">{{ wordChoose }}</p>
+        <div class="box-hidden-word">
+            <div v-for="letter in hiddenWord" :key="letter.index">
+                <p
+                    v-if="hiddenWord"
+                    class="animate__animated animate__backInDown"
+                >
+                    {{ letter }}
+                </p>
+            </div>
+        </div>
         <div class="box-second">
             <!-- 9 erreurs maximum -->
             <div class="box-use-letter">
@@ -24,30 +50,32 @@
                     <p class="animate__animated animate__bounce">{{ elem }}</p>
                 </div>
             </div>
-            <div class="box-letter">
-                <div
-                    class="box-alphabet"
-                    v-for="letter in alphabet"
-                    :key="letter.index"
-                >
-                    <button
-                        class="button-59"
-                        :value="`${letter}`"
-                        @click="choose"
-                        :disabled="!isActive"
+            <div
+                class="animate__animated animate__backInUp"
+                v-if="newGame == true"
+            >
+                <div class="box-letter">
+                    <div
+                        class="box-alphabet"
+                        v-for="letter in alphabet"
+                        :key="letter.index"
                     >
-                        {{ letter }}
-                    </button>
+                        <button
+                            class="button-59"
+                            :value="`${letter}`"
+                            @click="letterChoose"
+                            :disabled="!isActive"
+                        >
+                            {{ letter }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <p>{{ check }}</p>
     </div>
 </template>
 
 <script>
-// @ is an alias to /src
 import { mots } from "../assets/mots";
 
 export default {
@@ -87,21 +115,24 @@ export default {
             chooseLetter: [],
             displayLetter: [],
             useLetter: [],
+            findLetter: [],
             isActive: true,
             message: "",
             word: "",
-            lengthWord: "",
-            wordChoose: "",
-            check: "",
+            hiddenWord: "",
+            error: 0,
+            looseCondition: false,
+            winCondition: false,
+            imgError: "",
+            newGame: false,
         };
     },
     computed: {},
+
     methods: {
-        choose(e) {
-            // console.log(e.target.value);
+        letterChoose(e) {
             this.chooseLetter.push(e.target.value);
 
-            // console.log(typeof this.chooseLetter);
             for (let i = 0; this.chooseLetter[i]; i++) {
                 this.displayLetter = this.chooseLetter[i];
             }
@@ -112,22 +143,26 @@ export default {
             if (index > -1) {
                 this.alphabet.splice(index, 1);
             }
-            if (this.useLetter.length == 10) {
-                this.message = "Vous avez perdu";
-                this.isActive = false;
-            }
-
             // Vérification si lettre existe dans le mot random
             if (this.word.includes(e.target.value)) {
                 // find index et remplacer le _ par la lettre trouvé
 
                 this.word.split("").forEach((letter, index) => {
                     if (letter === e.target.value) {
-                        this.wordChoose[index] = e.target.value;
+                        this.hiddenWord[index] = e.target.value;
+                        this.findLetter.push(this.hiddenWord[index]);
+                        console.log(this.findLetter.length);
                     }
                 });
             } else {
-                console.log("non");
+                this.error++;
+                // console.log(this.error);
+            }
+
+            // Condtion de victoire
+            if (this.findLetter.length === this.word.length) {
+                this.winCondition = true;
+                this.isActive = false;
             }
         },
         newgame() {
@@ -144,11 +179,13 @@ export default {
 
             const findWord = hidden_word.split("");
 
-            this.wordChoose = findWord;
+            this.hiddenWord = findWord;
 
-            console.log(this.wordChoose);
+            console.log(this.hiddenWord);
 
+            this.newGame = true;
             this.useLetter = [];
+            this.error = 0;
         },
     },
 };
@@ -156,12 +193,19 @@ export default {
 
 <style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Lobster&family=Orbitron:wght@700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Lobster&family=Orbitron:wght@700&display=swap");
 .wrapper {
     height: 844px;
-    background: blueviolet;
+    background: #14213d;
     display: flex;
     flex-direction: column;
     justify-content: space-around;
+}
+h1 {
+    color: white;
+    text-align: center;
+    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    text-shadow: #000 1px 0 10px;
 }
 
 /* Button start*/
@@ -352,15 +396,65 @@ export default {
     display: flex;
     justify-content: space-around;
 }
+
 .box-pendu {
     width: 60%;
     height: 200px;
-    background-color: blue;
 }
+.rotate-scale-up {
+    -webkit-animation: rotate-scale-up 0.65s linear both;
+    animation: rotate-scale-up 0.65s linear both;
+}
+
+@-webkit-keyframes rotate-scale-up {
+    0% {
+        -webkit-transform: scale(1) rotateZ(0);
+        transform: scale(1) rotateZ(0);
+    }
+    50% {
+        -webkit-transform: scale(2) rotateZ(180deg);
+        transform: scale(2) rotateZ(180deg);
+    }
+    100% {
+        -webkit-transform: scale(1) rotateZ(360deg);
+        transform: scale(1) rotateZ(360deg);
+    }
+}
+@keyframes rotate-scale-up {
+    0% {
+        -webkit-transform: scale(1) rotateZ(0);
+        transform: scale(1) rotateZ(0);
+    }
+    50% {
+        -webkit-transform: scale(2) rotateZ(180deg);
+        transform: scale(2) rotateZ(180deg);
+    }
+    100% {
+        -webkit-transform: scale(1) rotateZ(360deg);
+        transform: scale(1) rotateZ(360deg);
+    }
+}
+
 .box-info-succes {
     width: 35%;
     height: 200px;
-    background-color: green;
+    font-family: "Orbitron", sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 5s;
+}
+.word {
+    color: white;
+    font-family: "Orbitron", sans-serif;
+    font-size: 27px;
+}
+
+.box-hidden-word {
+    display: flex;
+    justify-content: space-evenly;
+    color: white;
+    font-size: 35px;
 }
 
 /* Partie basse*/
@@ -373,9 +467,9 @@ export default {
     align-items: center;
     font-family: "Orbitron", sans-serif;
     font-size: 25px;
+    color: #e5e5e5;
 }
 .box-second {
-    background: orange;
     height: 350px;
     display: flex;
     flex-direction: column;
@@ -383,14 +477,18 @@ export default {
 }
 
 .box-use-letter {
-    background: yellow;
+    background: #fca311;
+    border: white solid 4px;
     height: 35px;
     display: flex;
     justify-content: space-evenly;
     align-items: center;
 }
 .box-letter {
-    background: blue;
+    background: #f1c47b;
+    border: white solid 4px;
+    box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 28px,
+        rgba(0, 0, 0, 0.22) 0px 10px 10px;
     height: 243px;
     display: flex;
     flex-wrap: wrap;
